@@ -7,24 +7,27 @@ Kotlin, Jetpack Compose, Gradle Kotlin DSL. Android 10 (API 29) and up; targets 
 
 ## How it works
 
-- **Money now:** what's in your account before these paychecks.
-- **Income:** Paycheck 1 and Paycheck 2 to start. Rename them, add more (a second job, a side
-  gig), or remove one.
-- **Budget lines**, worked through in order, each switchable on or off:
-  - **$ Amount:** a fixed amount. Shows what share of the paycheck it is.
-  - **% Percent:** a percent of the paycheck. Shows it in dollars.
-  - **Left over:** takes nothing. Shows what's left at that point in the list.
-- **From:** each line is paid by one paycheck, or by **both**. With both, an amount is split
-  evenly (odd cents go to the first paycheck) and a percent comes out of each paycheck.
-- **Summary:** each paycheck's income, budgeted and left, then:
-  *money now + all income − everything budgeted = after these paychecks*. That last figure is
-  always on screen at the bottom.
+One compact screen, laid out like the original:
+
+- **Top row:** Money now, Paycheck 1, Paycheck 2. The two paychecks are added together into one
+  paycheck, and every line draws on that.
+- **One row per budget line**, worked through in order: on/off checkbox, type, name, value,
+  result.
+  - **$** Amount: a fixed amount. The result is its share of the paycheck.
+  - **%** Percent: a percent of the paycheck. The result is that in dollars.
+  - **=** Left over: takes nothing. The result is what's left at that point in the list (red if
+    below zero).
+- **The type button** opens the line's menu: change the type, move the line up or down, or
+  delete it. **+ Add line** adds one.
+- **The bottom bar** always shows what's budgeted, what's left of the paycheck, and
+  *money now + paycheck − budgeted* = what you'll have after these paychecks.
 
 It recalculates as you type (there's no Submit button) and saves automatically to a file in the
-app's private storage. Line order can be changed from each line's ⋮ menu.
+app's private storage. Budgets saved by 1.0, which kept a list of incomes, open with the first
+income as Paycheck 1 and the rest added up as Paycheck 2.
 
 These are the same three line types as the original's Number, Percent and Remaining. The first
-run starts with its example lines (Insurance, YouTube, Gas, Rec, Other) spread over two paychecks.
+run starts with its example lines (Insurance, Other, YouTube, Gas, Rec).
 
 ## Building and installing
 

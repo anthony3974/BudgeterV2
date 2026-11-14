@@ -7,9 +7,7 @@ import com.tony3974.budgeterv2.budget.BudgetEngine
 import com.tony3974.budgeterv2.budget.BudgetResult
 import com.tony3974.budgeterv2.data.BudgetForm
 import com.tony3974.budgeterv2.data.FormStore
-import com.tony3974.budgeterv2.data.IncomeForm
 import com.tony3974.budgeterv2.data.LineForm
-import com.tony3974.budgeterv2.budget.LineType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,28 +50,14 @@ class BudgetViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setMoneyNow(text: String) = update { it.copy(moneyNow = text) }
-
-    fun updateIncome(income: IncomeForm) = update { f ->
-        f.copy(incomes = f.incomes.map { if (it.id == income.id) income else it })
-    }
-
-    fun addIncome() = update { it.copy(incomes = it.incomes + IncomeForm(BudgetForm.newId(), "", "")) }
-
-    /** Lines that were paid by it move to all incomes. */
-    fun removeIncome(id: String) = update { f ->
-        f.copy(
-            incomes = f.incomes.filterNot { it.id == id },
-            lines = f.lines.map { if (it.sourceId == id) it.copy(sourceId = null) else it },
-        )
-    }
+    fun setPaycheck1(text: String) = update { it.copy(paycheck1 = text) }
+    fun setPaycheck2(text: String) = update { it.copy(paycheck2 = text) }
 
     fun updateLine(line: LineForm) = update { f ->
         f.copy(lines = f.lines.map { if (it.id == line.id) line else it })
     }
 
-    fun addLine() = update {
-        it.copy(lines = it.lines + LineForm(BudgetForm.newId(), "", LineType.AMOUNT, "", null, enabled = true))
-    }
+    fun addLine() = update { it.copy(lines = it.lines + BudgetForm.newLine()) }
 
     fun removeLine(id: String) = update { f -> f.copy(lines = f.lines.filterNot { it.id == id }) }
 
