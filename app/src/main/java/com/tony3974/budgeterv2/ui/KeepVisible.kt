@@ -14,6 +14,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusEvent
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 /**
@@ -26,12 +31,24 @@ import kotlinx.coroutines.delay
 fun Modifier.keepVisibleWhenFocused(): Modifier {
     val requester = remember { BringIntoViewRequester() }
     var focused by remember { mutableStateOf(false) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    val margin = with(LocalDensity.current) { VisibleMargin.toPx() }
     val imeVisible = WindowInsets.isImeVisible
     LaunchedEffect(focused, imeVisible) {
         if (focused && imeVisible) {
             delay(250)
-            requester.bringIntoView()
+            // Ask for a bit more than the field itself, so it doesn't end up flush against the
+            // top of the keyboard.
+            requester.bringIntoView(
+                Rect(0f, -margin, size.width.toFloat(), size.height + margin),
+            )
         }
     }
-    return this.bringIntoViewRequester(requester).onFocusEvent { focused = it.isFocused }
+    return this
+        .onSizeChanged { size = it }
+        .bringIntoViewRequester(requester)
+        .onFocusEvent { focused = it.isFocused }
 }
+
+/** Space kept between a focused field and the keyboard (or the top of the screen). */
+private val VisibleMargin = 16.dp

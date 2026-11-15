@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -44,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -64,6 +66,15 @@ import java.text.NumberFormat
 private val FieldHeight = 40.dp
 private val ValueWidth = 76.dp
 private val ResultWidth = 86.dp
+
+/** Space from the screen edge, shared by the content and the totals bar so their edges line up. */
+private val EdgePadding = 12.dp
+/** Space between the boxes in a row. */
+private val ItemGap = 6.dp
+/** Space between rows. */
+private val RowGap = 8.dp
+/** The drawn size of a Material checkbox, without its padding or touch area. */
+private val CheckboxBox = 20.dp
 
 private fun money(cents: Long): String = NumberFormat.getCurrencyInstance().format(BigDecimal.valueOf(cents, 2))
 
@@ -105,10 +116,10 @@ fun BudgetScreen(vm: BudgetViewModel = viewModel()) {
                 // first text box doesn't grab it and open the on-screen keyboard at launch.
                 .focusable()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(horizontal = EdgePadding, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(RowGap),
         ) {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(ItemGap)) {
                 LabeledField("Money now", form.moneyNow, vm::setMoneyNow, Modifier.weight(1f))
                 LabeledField("Paycheck 1", form.paycheck1, vm::setPaycheck1, Modifier.weight(1f))
                 LabeledField("Paycheck 2", form.paycheck2, vm::setPaycheck2, Modifier.weight(1f))
@@ -117,7 +128,7 @@ fun BudgetScreen(vm: BudgetViewModel = viewModel()) {
                 "Paycheck: ${money(result.paycheckCents)} (both added together)",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 2.dp, bottom = 4.dp),
+                modifier = Modifier.padding(top = 2.dp),
             )
             HorizontalDivider()
             form.lines.forEachIndexed { i, line ->
@@ -132,7 +143,10 @@ fun BudgetScreen(vm: BudgetViewModel = viewModel()) {
             if (form.lines.isEmpty()) {
                 Text("No lines yet.", Modifier.padding(vertical = 8.dp))
             }
-            TextButton(onClick = vm::addLine) { Text("+ Add line") }
+            // No side padding, so the text lines up with the left edge of everything above it.
+            TextButton(onClick = vm::addLine, contentPadding = PaddingValues(vertical = 8.dp)) {
+                Text("+ Add line")
+            }
         }
     }
 }
@@ -147,9 +161,13 @@ private fun LabeledField(label: String, value: String, onValueChange: (String) -
 
 @Composable
 private fun LineRow(line: LineForm, result: LineResult?, isFirst: Boolean, isLast: Boolean, vm: BudgetViewModel) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 40.dp) {
-            Checkbox(checked = line.enabled, onCheckedChange = { vm.updateLine(line.copy(enabled = it)) })
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(ItemGap)) {
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides FieldHeight) {
+            Checkbox(
+                checked = line.enabled,
+                onCheckedChange = { vm.updateLine(line.copy(enabled = it)) },
+                modifier = Modifier.tightTouchArea(),
+            )
         }
         TypeButton(
             type = line.type,
@@ -191,9 +209,20 @@ private fun LineRow(line: LineForm, result: LineResult?, isFirst: Boolean, isLas
             textAlign = TextAlign.End,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.width(ResultWidth),
+            modifier = Modifier.padding(start = 4.dp).width(ResultWidth),
         )
     }
+}
+
+/**
+ * Takes up only the width of the checkbox's drawn box (20 dp) in the row while keeping its full
+ * 40 dp touch area, which spills 10 dp past each side. Without this the box sits 10 dp in from the
+ * left edge and has a wide gap after it.
+ */
+private fun Modifier.tightTouchArea(): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val inset = ((placeable.width - CheckboxBox.roundToPx()) / 2).coerceAtLeast(0)
+    layout(placeable.width - 2 * inset, placeable.height) { placeable.place(-inset, 0) }
 }
 
 /** What a line works out to, as the original showed it, and whether it's a problem. */
@@ -307,7 +336,7 @@ private fun CompactField(
 private fun TotalsBar(result: BudgetResult) {
     Surface(color = MaterialTheme.colorScheme.secondaryContainer, tonalElevation = 3.dp) {
         Row(
-            Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal = EdgePadding, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
